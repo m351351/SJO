@@ -1,0 +1,2 @@
+# SJO
+Sulautettujen järjestelmien ohjelmistokehitys
