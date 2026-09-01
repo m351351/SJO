@@ -1,4 +1,3 @@
-
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
@@ -7,35 +6,29 @@
 #include <inttypes.h>
 #include "button.h"
 
-// Configure buttons
 #define BUTTON_0 DT_ALIAS(sw0)
-// #define BUTTON_1 DT_ALIAS(sw1)
-
 
 static const struct gpio_dt_spec button_0 = GPIO_DT_SPEC_GET_OR(BUTTON_0, gpios, {0});
 static struct gpio_callback button_0_data;
 
-
 int saved_state = 0;
 
-// Button interrupt handler
 void button_0_handler(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {
 	printk("Button pressed\n");
     if (tilakone != 4) {
-        saved_state = tilakone; // Ota nykyinen tila talteen
-        tilakone = 4;           // Aseta tilaksi pause
+        saved_state = tilakone; 
+        tilakone = 4;           
     } else {
-        tilakone = saved_state; // Palauta edellinen tila
+        tilakone = saved_state; 
     }
 }
-}
 
-
-// Button initialization
 int init_button() {
-
 	int ret;
+	ret = gpio_pin_configure_dt(&button_0, GPIO_INPUT | GPIO_PULL_UP);
+	ret = gpio_pin_interrupt_configure_dt(&button_0, GPIO_INT_EDGE_BOTH);
+	
 	if (!gpio_is_ready_dt(&button_0)) {
 		printk("Error: button 0 is not ready\n");
 		return -1;
