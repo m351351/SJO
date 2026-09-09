@@ -3,4 +3,4 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 
 project(SJO)
 
-target_sources(app PRIVATE src/main.c src/button.c)
+target_sources(app PRIVATE src/main.c)
