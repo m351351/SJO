@@ -1,15 +1,12 @@
-'''
-Tavoite oli kolme pistettä, mutta en saanut 2 pisteen asiaa toimimaan
-Yritin tehdä koodista modulaarisemman ja helpostiluettavan laittamalla button.c ja button.h tiedostot
-Ohjelma meni ihan nätisti tuon liikennevaloasian osalta, mutta mitään muuta kontaktia
-en sitten laitteeseen enää saanutkaan. Luennossa jossa opettaja kävi läpi 
-miten harjoitus tulee tehdä ei ollut ääntä, enkä löytänyt ohjevideota jossa olisi ollut äänikin mukana.
+// Tavoite oli kolme pistettä, mutta en saanut 2 pisteen asiaa toimimaan
+//Yritin tehdä koodista modulaarisemman ja helpostiluettavan laittamalla button.c ja button.h tiedostot
+//Ohjelma meni ihan nätisti tuon liikennevaloasian osalta, mutta mitään muuta kontaktia
+//en sitten laitteeseen enää saanutkaan. Luennossa jossa opettaja kävi läpi 
+//miten harjoitus tulee tehdä ei ollut ääntä, enkä löytänyt ohjevideota jossa olisi ollut äänikin mukana.
 
-Teoriassa tiedän miten ohjelman pitäisi toimia, mutta en kertakaikkiaan saanut sitä toimimaan käytännössä. Käytin tähän kokonaisen työpäivän.
+//Teoriassa tiedän miten ohjelman pitäisi toimia, mutta en kertakaikkiaan saanut sitä toimimaan käytännössä. Käytin tähän kokonaisen työpäivän.
 
-Perehdyn aiheeseen lisää myöhemmin, josko luennoilla selviäisi asioita tai saisin opiskelutovereilta vertaistukea.
-
-'''
+//Perehdyn aiheeseen lisää myöhemmin, josko luennoilla selviäisi asioita tai saisin opiskelutovereilta vertaistukea.
 
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
@@ -34,6 +31,7 @@ K_THREAD_DEFINE(green_thread,STACKSIZE,green_led_task,NULL,NULL,NULL,PRIORITY,0,
 K_THREAD_DEFINE(yellow_thread,STACKSIZE,yellow_led_task,NULL,NULL,NULL,PRIORITY,0,0);
 
 int tilakone = 0; 
+int led_state = 0;
 
 int init_led() {
 	int ret;
