@@ -68,12 +68,16 @@ void paussin_tsekkaus(int total_ms){
         int kulunut_aika = 0;
         while (kulunut_aika < total_ms) {
             // Jos ollaan pausella (tila 4), odotetaan ilman että aika kuluu
-            if (tilakone == 4 || tilakone >= 5) {
+            while (tilakone == 4) {
                 k_msleep(100); // Odotetaan paikoillaan kuluttamatta aikaa
-                return;
+                
             }
             
-            else {
+            if (tilakone >= 5){
+                return;
+            }
+
+            else{
                 // Muuten normaali sekvenssi kuluttaa aikaa eteenpäin
                 k_msleep(100); 
                 kulunut_aika += 100; 
@@ -145,12 +149,18 @@ void led_task(void *, void *, void*) {
                         break; 
                     
                     case 8: 
-                        gpio_pin_set_dt(&red, 1);
-                        gpio_pin_set_dt(&green, 1);
-                        k_msleep(100);
-                        gpio_pin_set_dt(&red, 0);
-                        gpio_pin_set_dt(&green, 0);
-                        k_msleep(100); 
+                        while (tilakone == 8) {
+                            gpio_pin_set_dt(&red, 1);
+                            gpio_pin_set_dt(&green, 1);
+                            k_msleep(500);
+                            
+                            // Jos vilkun aikana painetaan nappia uudelleen, poistutaan heti
+                            if (tilakone != 8) break; 
+                            
+                            gpio_pin_set_dt(&red, 0);
+                            gpio_pin_set_dt(&green, 0);
+                            k_msleep(500);
+                        }
                         break;
 
                         default:
