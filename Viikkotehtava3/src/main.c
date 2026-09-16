@@ -1,38 +1,49 @@
 // Meri-Tuulia Turtinen
 // TVT24SPL
-
 // Tavoite kolme pistettä
-// laitettu buttonit omiin moduuleihin. Järkyttävä taistelu asian kanssa että sain ne toimimaan
-// Tässä nyt kahden pisteen edestä toimintaa.
+// aloitettu vasta ekaa
+
 
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/uart.h>
 #include "button.h"
+#include <stdlib.h>
+#include <string.h>
 
+const struct gpio_dt_spec red = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios);
+const struct gpio_dt_spec green = GPIO_DT_SPEC_GET(DT_ALIAS(led1), gpios);
+const struct gpio_dt_spec blue = GPIO_DT_SPEC_GET(DT_ALIAS(led2), gpios);
+const struct gpio_dt_spec yellow = GPIO_DT_SPEC_GET(DT_ALIAS(led3), gpios);
 
+/****************************
+ * Remember to add line:
+ * CONFIG_HEAP_MEM_POOL_SIZE=1024
+ * to prj.conf
+ ****************************/
 
-static const struct  gpio_dt_spec red = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios);
-static const struct gpio_dt_spec green = GPIO_DT_SPEC_GET(DT_ALIAS(led1), gpios);
-static const struct gpio_dt_spec blue = GPIO_DT_SPEC_GET(DT_ALIAS(led2), gpios);
-static const struct gpio_dt_spec yellow = GPIO_DT_SPEC_GET(DT_ALIAS(led3), gpios);
-
+// Thread initializations
 #define STACKSIZE 500
 #define PRIORITY 5
-//void red_led_task(void *, void *, void*);
-//void green_led_task(void *, void *, void*);
-//void blue_led_task(void *, void *, void*);
-//void yellow_led_task(void *, void *, void*);
-void led_task(void *, void *, void*);
 
-K_THREAD_DEFINE(red_thread,STACKSIZE,led_task,NULL,NULL,NULL,PRIORITY,0,0);
-K_THREAD_DEFINE(green_thread,STACKSIZE,led_task,NULL,NULL,NULL,PRIORITY,0,0);
-K_THREAD_DEFINE(blue_thread,STACKSIZE,led_task,NULL,NULL,NULL,PRIORITY,0,0);
-K_THREAD_DEFINE(yellow_thread,STACKSIZE,led_task,NULL,NULL,NULL,PRIORITY,0,0);
+// UART initialization
+#define UART_DEVICE_NODE DT_CHOSEN(zephyr_shell_uart)
+static const struct device *const uart_dev = DEVICE_DT_GET(UART_DEVICE_NODE);
 
-volatile int tilakone = 0; 
-int led_state = 0;
+// Create dispatcher FIFO buffer
+K_FIFO_DEFINE(dispatcher_fifo);
+
+// FIFO dispatcher data type
+struct data_t {
+	/*************************
+	// Add fifo_reserved below
+	*************************/
+	void *fifo_reserved;
+	char msg[20];
+};
+
 
 int init_led() {
 	int ret;
@@ -56,81 +67,127 @@ int init_led() {
 	printk("Led initialized ok\n");
 	return 0;
 }
-
-int main(void)
-{
-	init_led(); 
-	init_button();
-
-	while (1) {
-		k_msleep(100);
-	}
-
+/********************
+ * init UART
+ */
+int init_uart(void) {
+	// UART initialization
+	if (!device_is_ready(uart_dev)) {
+        printk("UART device not ready\n");
+		return 1;
+	} 
 	return 0;
 }
 
-void paussin_tsekkaus(int total_ms){
-        int kulunut_aika = 0;
-        while (kulunut_aika < total_ms) {
-            if (tilakone == 4) {
-                k_msleep(100); // Sleep for a short time to avoid busy waiting
-            } else {
-                k_msleep(100); // Sleep for a short time to avoid busy waiting
-                kulunut_aika += 100; // Increment elapsed time
-            }
-        }
+/********************
+ * Main task
+ */
+int main(void)
+{
+    printk("Dispatcher example started\n");
+	int ret = init_uart();
+    
+	if (ret != 0) {
+		printk("UART initialization failed!\n");
+		return ret;
+	}
+    init_led();
+	return 0;
 }
 
-
-void led_task(void *, void *, void*) {
-	printk("pyöritelhäs\n");
+/********************
+ * UART task
+ */
+static void uart_task(void *unused1, void *unused2, void *unused3)
+{
+	// Received character from UART
+	char rc=0;
+	// Message from UART
+	char uart_msg[20];
+	memset(uart_msg,0,20);
+	int uart_msg_cnt = 0;
 
 	while (true) {
+		// Ask UART if data available
+		if (uart_poll_in(uart_dev,&rc) == 0) {
+			printk("Received: %c\n",rc);
+			// If character is not newline, add to UART message buffer
+			if (rc != '\r') {
+				uart_msg[uart_msg_cnt] = rc;
+				uart_msg_cnt++;
+			// Character is newline, copy dispatcher data and put to FIFO buffer
+			} else {
+				printk("UART msg: %s\n", uart_msg);
+                
+				struct data_t *buf = k_malloc(sizeof(struct data_t));
+				if (buf == NULL) {
+					return;
+				}
+				// Copy UART message to dispatcher data
+				// strncpy(buf->msg, 20, uart_msg); // mitä ihmettä, miksi kaatuu!!
+				snprintf(buf->msg, 20, "%s", uart_msg);
+                k_fifo_put(&dispatcher_fifo, buf);
+				// You need to:
+				// Put dispatcher data to FIFO buffer
 
-		if (tilakone == 4){
-                     k_sleep(K_SECONDS(1));
-                     continue; // Skip the rest of the loop if tilakone is 0           
-                }
+				// Clear UART receive buffer
+				uart_msg_cnt = 0;
+				memset(uart_msg,0,20);
 
-                switch (tilakone) {
-                    case 0:
-                        gpio_pin_set_dt(&red, 1);
-                        printk("Red on\n");
-                        paussin_tsekkaus(1000); 
-                        
-                        gpio_pin_set_dt(&red, 0);
-                        printk("Red off\n");
-                        paussin_tsekkaus(1000); 
-                        if (tilakone != 4) tilakone = 1; // Move to the next state only if tilakone is not 0
-                        break;
-
-                    case 1:
-                        gpio_pin_set_dt(&red, 1);
-			gpio_pin_set_dt(&green, 1);;
-                        printk("Yellow on\n");
-                        paussin_tsekkaus(1000); 
-                        gpio_pin_set_dt(&red, 0);
-			gpio_pin_set_dt(&green, 0);
-                        printk("Yellow off\n");
-                        paussin_tsekkaus(1000);
-                        if (tilakone != 4) tilakone = 2; // Move to the next state only if tilakone is not 4
-                        break;
-
-                    case 2:
-                        gpio_pin_set_dt(&green, 1);
-                        printk("Green on\n");
-                        paussin_tsekkaus(1000); 
-                        gpio_pin_set_dt(&green, 0);
-                        printk("Green off\n");
-                        paussin_tsekkaus(1000); 
-                        if (tilakone != 4) tilakone = 0; // Move to the next state only if tilakone is not 4
-                        break;
-
-                    default:
-                        k_sleep(K_SECONDS(1));
-                        break;
-                }
-        }
-                 
+				// Clear UART message buffer
+				uart_msg_cnt = 0;
+				memset(uart_msg,0,20);
+			}
+		}
+		k_msleep(10);
+	}
+	return 0;
 }
 
+/********************
+ * Dispatcher task
+ */
+static void dispatcher_task(void *unused1, void *unused2, void *unused3)
+{
+	while (true) {
+		// Receive dispatcher data from uart_task fifo
+		struct data_t *rec_item = k_fifo_get(&dispatcher_fifo, K_FOREVER);
+		char sequence[20];
+		memcpy(sequence,rec_item->msg,20);
+		k_free(rec_item);
+
+		printk("Dispatcher: %s\n", sequence);
+
+
+        // You need to:
+        // Parse color and time from the fifo data
+        // Example
+        char color = sequence[0];
+
+        if (color == 'R' || color == 'r') {
+            printk("Color: RED\n");
+            gpio_pin_set_dt(&red,1);
+            k_msleep(1000);
+            gpio_pin_set_dt(&red,0);
+        } else if (color == 'Y' || color == 'y') {
+            printk("Color: YELLOW\n");
+            gpio_pin_set_dt(&yellow,1);
+            k_msleep(1000);
+            gpio_pin_set_dt(&yellow,0);
+        } else if (color == 'G' || color == 'g') {
+            printk("Color: GREEN\n");
+            gpio_pin_set_dt(&green,1);
+            k_msleep(1000);
+            gpio_pin_set_dt(&green,0);
+        } else {
+            printk("Unknown color: %c\n", color);
+        }
+        int time = atoi(sequence+2); 
+		printk("Data: %c %d\n", color, time);
+        // Send the parsed color information to tasks using fifo
+        // Use release signal to control sequence or k_yield
+	}
+}
+
+K_THREAD_DEFINE(dis_thread,STACKSIZE,dispatcher_task,NULL,NULL,NULL,PRIORITY,0,0);
+K_THREAD_DEFINE(uart_thread,STACKSIZE,uart_task,NULL,NULL,NULL,PRIORITY,0,0);
