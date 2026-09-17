@@ -122,7 +122,7 @@ int main(void)
 	while (true) {
 		k_msleep(100);
 	}
-
+	
 	return 0;
 }
 
@@ -191,8 +191,9 @@ static void dispatcher_task(void *unused1, void *unused2, void *unused3)
 		memcpy(sequence,rec_item->msg,20);
 		k_free(rec_item);
 
-		printk("Dispatcher: %s\n", sequence);
+		//printk("Dispatcher: %s\n", sequence);
 
+		uint64_t total_sequence_time = 0;
 
         // You need to:
         // Parse color and time from the fifo data
@@ -207,7 +208,7 @@ static void dispatcher_task(void *unused1, void *unused2, void *unused3)
 			timing_start();
 			timing_t red_start_time = timing_counter_get();
 
-            printk("Color: RED\n");
+            //printk("Color: RED\n");
             gpio_pin_set_dt(&red,1);
             k_msleep(1000);
             gpio_pin_set_dt(&red,0);
@@ -216,13 +217,14 @@ static void dispatcher_task(void *unused1, void *unused2, void *unused3)
 			timing_t red_end_time = timing_counter_get();
 			timing_stop();
     		uint64_t timing_ns = timing_cycles_to_ns(timing_cycles_get(&red_start_time, &red_end_time));
-			printk("Red task: %lld\n", timing_ns);
+			total_sequence_time += timing_ns;
+			//printk("Red task: %lld\n", timing_ns);
             
         } else if (color == 'Y' || color == 'y') {
 			timing_start();
 			timing_t yellow_start_time = timing_counter_get();
 
-            printk("Color: YELLOW\n");
+            //printk("Color: YELLOW\n");
             gpio_pin_set_dt(&red,1);
 			gpio_pin_set_dt(&green,1);
             k_msleep(1000);
@@ -233,13 +235,14 @@ static void dispatcher_task(void *unused1, void *unused2, void *unused3)
 			timing_t yellow_end_time = timing_counter_get();
 			timing_stop();
     		uint64_t timing_ns = timing_cycles_to_ns(timing_cycles_get(&yellow_start_time, &yellow_end_time));
-			printk("Yellow task: %lld\n", timing_ns);
+			total_sequence_time += timing_ns;
+			//printk("Yellow task: %lld\n", timing_ns);
 
         } else if (color == 'G' || color == 'g') {
 			timing_start();
 			timing_t green_start_time = timing_counter_get();
 
-			printk("Color: GREEN\n");
+			//printk("Color: GREEN\n");
             gpio_pin_set_dt(&green,1);
             k_msleep(1000);
             gpio_pin_set_dt(&green,0);
@@ -248,12 +251,13 @@ static void dispatcher_task(void *unused1, void *unused2, void *unused3)
 			timing_t green_end_time = timing_counter_get();
 			timing_stop();
     		uint64_t timing_ns = timing_cycles_to_ns(timing_cycles_get(&green_start_time, &green_end_time));
-			printk("Green task: %lld\n", timing_ns);
+			total_sequence_time += timing_ns;
+			//printk("Green task: %lld\n", timing_ns);
 		}
 		else if (color == 'T' || color == 't') {
 			if (Tlaskuri == 0){
 			i = 0;
-			printk("UUdestaan");
+			//		printk("UUdestaan");
 			Tlaskuri++;
 		}else{
 			i++;
@@ -262,13 +266,14 @@ static void dispatcher_task(void *unused1, void *unused2, void *unused3)
 			
 
 		} else {
-            printk("Unknown color: %c\n", color);
+            //printk("Unknown color: %c\n", color);
         }
         int time = atoi(sequence+2); 
-		printk("Data: %c %d\n", color, time);
+		//printk("Data: %c %d\n", color, time);
         // Send the parsed color information to tasks using fifo
         // Use release signal to control sequence or k_yield
 	}
+	printk("yhteenlaskettu kokonaisaika: %lld\n", total_sequence_time);
 	
 	}
 }
