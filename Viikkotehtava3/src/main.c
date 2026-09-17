@@ -2,6 +2,7 @@
 // TVT24SPL
 // Tavoite kolme pistettä
 // aloitettu vasta ekaa
+// start terminal with new configuration
 
 
 #include <zephyr/kernel.h>
@@ -67,7 +68,7 @@ int init_led() {
 
 	gpio_pin_set_dt(&red, 0);
     gpio_pin_set_dt(&green, 0);
-    gpio_pin_set_dt(&yellow, 0);
+    //gpio_pin_set_dt(&yellow, 0);
 	printk("Led initialized ok\n");
 	return 0;
 }
@@ -176,7 +177,9 @@ static void dispatcher_task(void *unused1, void *unused2, void *unused3)
         // You need to:
         // Parse color and time from the fifo data
         // Example
-        char color = sequence[0];
+		for (int i =0; sequence[i] != '\0'; i++) {
+            char color = sequence[i];
+        
 
         if (color == 'R' || color == 'r') {
             printk("Color: RED\n");
@@ -186,9 +189,12 @@ static void dispatcher_task(void *unused1, void *unused2, void *unused3)
             
         } else if (color == 'Y' || color == 'y') {
             printk("Color: YELLOW\n");
-            gpio_pin_set_dt(&yellow,1);
+            gpio_pin_set_dt(&red,1);
+			gpio_pin_set_dt(&green,1);
             k_msleep(1000);
-            gpio_pin_set_dt(&yellow,0);
+            gpio_pin_set_dt(&red,0);
+			gpio_pin_set_dt(&green,0);
+
         } else if (color == 'G' || color == 'g') {
             printk("Color: GREEN\n");
             gpio_pin_set_dt(&green,1);
@@ -201,6 +207,7 @@ static void dispatcher_task(void *unused1, void *unused2, void *unused3)
 		printk("Data: %c %d\n", color, time);
         // Send the parsed color information to tasks using fifo
         // Use release signal to control sequence or k_yield
+	}
 	}
 }
 
