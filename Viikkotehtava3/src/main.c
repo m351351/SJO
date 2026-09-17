@@ -1,7 +1,8 @@
 // Meri-Tuulia Turtinen
 // TVT24SPL
 // Tavoite kolme pistettä
-// aloitettu vasta ekaa
+// Yhden pisteen tehtävä suoritettu
+// en ole edes käyttänyt while-looppeja ledeihin joten ilmeisesti sekin ok eli kaksi pistettä
 // start terminal with new configuration
 
 
@@ -36,9 +37,9 @@ static const struct device *const uart_dev = DEVICE_DT_GET(UART_DEVICE_NODE);
 // Create dispatcher FIFO buffer
 K_FIFO_DEFINE(dispatcher_fifo);
 
-void red_led_task(void *, void *, void*);
-void green_led_task(void *, void *, void*);
-void yellow_led_task(void *, void *, void*);
+//void red_led_task(void *, void *, void*);
+//void green_led_task(void *, void *, void*);
+//void yellow_led_task(void *, void *, void*);
 
 // FIFO dispatcher data type
 struct data_t {
