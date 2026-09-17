@@ -3,6 +3,7 @@
 // Tavoite kolme pistettä
 // Yhden pisteen tehtävä suoritettu
 // en ole edes käyttänyt while-looppeja ledeihin joten ilmeisesti sekin ok eli kaksi pistettä
+// T laskuri lisätty eli KOLME PISTETTÄ
 // start terminal with new configuration
 
 
@@ -178,15 +179,18 @@ static void dispatcher_task(void *unused1, void *unused2, void *unused3)
         // You need to:
         // Parse color and time from the fifo data
         // Example
-		for (int i =0; sequence[i] != '\0'; i++) {
+		int Tlaskuri = 0;
+		
+		for (int i =0; sequence[i] != '\0';) {
             char color = sequence[i];
-        
+		
 
         if (color == 'R' || color == 'r') {
             printk("Color: RED\n");
             gpio_pin_set_dt(&red,1);
             k_msleep(1000);
             gpio_pin_set_dt(&red,0);
+			i++;
             
         } else if (color == 'Y' || color == 'y') {
             printk("Color: YELLOW\n");
@@ -195,13 +199,27 @@ static void dispatcher_task(void *unused1, void *unused2, void *unused3)
             k_msleep(1000);
             gpio_pin_set_dt(&red,0);
 			gpio_pin_set_dt(&green,0);
+			i++;
 
         } else if (color == 'G' || color == 'g') {
             printk("Color: GREEN\n");
             gpio_pin_set_dt(&green,1);
             k_msleep(1000);
             gpio_pin_set_dt(&green,0);
-        } else {
+			i++;
+		}
+		else if (color == 'T' || color == 't') {
+			if (Tlaskuri == 0){
+			i = 0;
+			printk("UUdestaan");
+			Tlaskuri++;
+		}else{
+			i++;
+		}
+		k_msleep(1000);
+			
+
+		} else {
             printk("Unknown color: %c\n", color);
         }
         int time = atoi(sequence+2); 
@@ -209,6 +227,7 @@ static void dispatcher_task(void *unused1, void *unused2, void *unused3)
         // Send the parsed color information to tasks using fifo
         // Use release signal to control sequence or k_yield
 	}
+	
 	}
 }
 
