@@ -43,9 +43,9 @@ int init_uart(void) {
 			} else {
 				printk("UART msg: %s\n", uart_msg);
                                 
-                                // FIFO Stuff begins
+                // FIFO Stuff begins
 				
-                                struct data_t *buf = k_malloc(sizeof(struct data_t));
+                struct data_t *buf = k_malloc(sizeof(struct data_t));
 				if (buf == NULL) {
 					return;
 				}
@@ -55,7 +55,7 @@ int init_uart(void) {
 
 				// You need to:
 				// Put dispatcher data to FIFO buffer
-                                k_fifo_put(&dispatcher_fifo, buf);
+                k_fifo_put(&dispatcher_fifo, buf);
 				// Clear UART receive buffer
 				uart_msg_cnt = 0;
 				memset(uart_msg,0,20);

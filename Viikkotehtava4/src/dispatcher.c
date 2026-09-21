@@ -8,6 +8,7 @@
 #include "dispatcher.h"
 #include "uart.h"
 #include "button.h"
+#include "debug.h"
 
 extern const struct gpio_dt_spec red;
 extern const struct gpio_dt_spec green;
@@ -39,8 +40,15 @@ void dispatcher_task(void *unused1, void *unused2, void *unused3)
                 timing_t red_end_time = timing_counter_get();
                 timing_stop();
                 uint64_t timing_ns = timing_cycles_to_ns(timing_cycles_get(&red_start_time, &red_end_time));
-                total_sequence_time += timing_ns;
                 
+				struct debug_data_t *buf = k_malloc(sizeof(struct debug_data_t));
+				if (buf != NULL) {
+					buf->time = timing_ns;
+					k_fifo_put(&data_fifo, buf);
+				}
+				k_yield();
+
+
             } else if (color == 'Y' || color == 'y') {
                 timing_start();
                 timing_t yellow_start_time = timing_counter_get();
@@ -55,7 +63,14 @@ void dispatcher_task(void *unused1, void *unused2, void *unused3)
                 timing_t yellow_end_time = timing_counter_get();
                 timing_stop();
                 uint64_t timing_ns = timing_cycles_to_ns(timing_cycles_get(&yellow_start_time, &yellow_end_time));
-                total_sequence_time += timing_ns;
+                //total_sequence_time += timing_ns;
+
+				struct debug_data_t *buf = k_malloc(sizeof(struct debug_data_t));
+				if (buf != NULL) {
+					buf->time = timing_ns;
+					k_fifo_put(&data_fifo, buf);
+				}
+				k_yield();
 
             } else if (color == 'G' || color == 'g') {
                 timing_start();
@@ -69,8 +84,16 @@ void dispatcher_task(void *unused1, void *unused2, void *unused3)
                 timing_t green_end_time = timing_counter_get();
                 timing_stop();
                 uint64_t timing_ns = timing_cycles_to_ns(timing_cycles_get(&green_start_time, &green_end_time));
-                total_sequence_time += timing_ns;
-            }
+                //total_sequence_time += timing_ns;
+				
+				struct debug_data_t *buf = k_malloc(sizeof(struct debug_data_t));
+				if (buf != NULL) {
+					buf->time = timing_ns;
+					k_fifo_put(&data_fifo, buf);
+				}
+				k_yield();
+
+			}
             else if (color == 'T' || color == 't') {
                 if (Tlaskuri == 0) {
                     i = 0;
@@ -83,6 +106,6 @@ void dispatcher_task(void *unused1, void *unused2, void *unused3)
                 i++;
             }
         }
-        printk("yhteenlaskettu kokonaisaika: %lld\n", total_sequence_time);
+       // printk("yhteenlaskettu kokonaisaika: %lld\n", total_sequence_time);
     }
 }

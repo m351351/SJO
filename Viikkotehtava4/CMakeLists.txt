@@ -8,4 +8,5 @@ target_sources(app PRIVATE
     src/button.c
     src/uart.c
     src/dispatcher.c
+    src/debug.c
 )

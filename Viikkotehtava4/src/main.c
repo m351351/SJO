@@ -1,5 +1,10 @@
 // Meri-Tuulia Turtinen
 // TVT24SPL
+// Tavoitellaan kolmea pistettä
+// Nyt tehty ajan laskenta noihin tehtäviin ja lisätty kuvat omaan kansioon "kuvat"
+// debugille tehty oma moduuli, jolloin viestit menevät erillisen debug taskin kautta
+
+
 
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
@@ -9,6 +14,7 @@
 #include "button.h"
 #include "uart.h"
 #include "dispatcher.h"
+#include "debug.h"
 
 // Thread initializations
 #define STACKSIZE 500
@@ -32,10 +38,6 @@ int init_led() {
     ret = gpio_pin_configure_dt(&green, GPIO_OUTPUT_ACTIVE);
     if (ret < 0) return ret;
     gpio_pin_set_dt(&green, 0);
-
-    ret = gpio_pin_configure_dt(&yellow, GPIO_OUTPUT_ACTIVE);
-    if (ret < 0) return ret;
-    gpio_pin_set_dt(&yellow, 0);
 
     printk("Led initialized ok\n");
     return 0;
@@ -71,9 +73,14 @@ int main(void)
     uint64_t timing_ns = timing_cycles_to_ns(timing_cycles_get(&start_time, &end_time));
     printk("Initialization: %lld\n", timing_ns);
 
+    /* 
     while (true) {
+        printk("MAIN TASKI\n");
         k_msleep(100);
-    }
+    }*/
+
+    k_yield();
+
     
     return 0;
 }
@@ -81,3 +88,4 @@ int main(void)
 // Säikeiden määritykset
 K_THREAD_DEFINE(dis_thread, STACKSIZE, dispatcher_task, NULL, NULL, NULL, PRIORITY, 0, 0);
 K_THREAD_DEFINE(uart_thread, STACKSIZE, uart_task, NULL, NULL, NULL, PRIORITY, 0, 0);
+K_THREAD_DEFINE(debug_thread, STACKSIZE, debug_task, NULL, NULL, NULL, PRIORITY, 0, 0);
