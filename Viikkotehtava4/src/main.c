@@ -3,7 +3,7 @@
 // Tavoitellaan kolmea pistettä
 // Nyt tehty ajan laskenta noihin tehtäviin ja lisätty kuvat omaan kansioon "kuvat"
 // debugille tehty oma moduuli, jolloin viestit menevät erillisen debug taskin kautta
-
+// debugin saa päälle ja pois painamalla d kirjainta
 
 
 #include <zephyr/kernel.h>
