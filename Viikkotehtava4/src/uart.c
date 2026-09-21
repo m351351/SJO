@@ -34,7 +34,8 @@ int init_uart(void) {
 	while (true) {
 		// Ask UART if data available
 		if (uart_poll_in(uart_dev,&rc) == 0) {
-			// printk("Received: %c\n",rc);
+			//printk("Saatu merkki: %c\n", rc);
+			
 			// If character is not newline, add to UART message buffer
 			if (rc != '\r') {
 				uart_msg[uart_msg_cnt] = rc;

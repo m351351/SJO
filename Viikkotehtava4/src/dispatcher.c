@@ -41,12 +41,14 @@ void dispatcher_task(void *unused1, void *unused2, void *unused3)
                 timing_stop();
                 uint64_t timing_ns = timing_cycles_to_ns(timing_cycles_get(&red_start_time, &red_end_time));
                 
+                
 				struct debug_data_t *buf = k_malloc(sizeof(struct debug_data_t));
 				if (buf != NULL) {
 					buf->time = timing_ns;
 					k_fifo_put(&data_fifo, buf);
 				}
 				k_yield();
+                
 
 
             } else if (color == 'Y' || color == 'y') {
@@ -94,6 +96,14 @@ void dispatcher_task(void *unused1, void *unused2, void *unused3)
 				k_yield();
 
 			}
+
+            else if (color == 'D' || color == 'd'){
+                //printk("pääsit tähän \n");
+                debug_enabled = !debug_enabled;
+                printk("Debug-tulostukset: %s\n", debug_enabled ? "PAALLA" : "POIS");
+                i++;
+            }
+
             else if (color == 'T' || color == 't') {
                 if (Tlaskuri == 0) {
                     i = 0;
@@ -105,6 +115,8 @@ void dispatcher_task(void *unused1, void *unused2, void *unused3)
             } else {
                 i++;
             }
+            
+            
         }
        // printk("yhteenlaskettu kokonaisaika: %lld\n", total_sequence_time);
     }

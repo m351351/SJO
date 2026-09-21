@@ -9,6 +9,7 @@ struct debug_data_t {
 };
 
 extern struct k_fifo data_fifo;
+extern bool debug_enabled;
 
 void debug_task(void *, void *, void *);
 
