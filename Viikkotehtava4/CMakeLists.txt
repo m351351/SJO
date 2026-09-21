@@ -3,7 +3,9 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 
 project(valot)
 
-target_sources(app PRIVATE 
+target_sources(app PRIVATE
     src/main.c
     src/button.c
+    src/uart.c
+    src/dispatcher.c
 )
