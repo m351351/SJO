@@ -1,1 +1,3 @@
 Koodia korjattu viikkotehtava4:ssa niin että se vastaa taas opettajan ohjeistamaa. Toiminnallisuudet kuitenkin toimivat molemmissa versioissa.
+
+Koodi korjattu opettajan kommenttien pohjalta

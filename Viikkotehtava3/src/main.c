@@ -13,6 +13,7 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/uart.h>
 #include <stdlib.h>
+#include "led_task.h"
 
 
 
@@ -25,10 +26,6 @@
 // Thread initializations
 #define STACKSIZE 500
 #define PRIORITY 5
-
-const struct gpio_dt_spec red = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios);
-const struct gpio_dt_spec green = GPIO_DT_SPEC_GET(DT_ALIAS(led1), gpios);
-const struct gpio_dt_spec yellow = GPIO_DT_SPEC_GET(DT_ALIAS(led3), gpios);
 
 // UART initialization
 #define UART_DEVICE_NODE DT_CHOSEN(zephyr_shell_uart)
@@ -52,28 +49,6 @@ struct data_t {
 };
 
 
-int init_led() {
-	int ret;
-
-	ret = gpio_pin_configure_dt(&red, GPIO_OUTPUT_ACTIVE);
-	if (ret < 0){
-        printk("olet täällä: 1\n");
-		return ret;
-	}
-	
-
-	ret = gpio_pin_configure_dt(&green, GPIO_OUTPUT_ACTIVE);
-	if (ret < 0){
-        printk("olet täällä: 2\n");  
-        return ret;
-    }
-
-	gpio_pin_set_dt(&red, 0);
-    gpio_pin_set_dt(&green, 0);
-    //gpio_pin_set_dt(&yellow, 0);
-	printk("Led initialized ok\n");
-	return 0;
-}
 /********************
  * init UART
  */
@@ -92,6 +67,13 @@ int init_uart(void) {
 int main(void)
 {
     printk("Dispatcher example started\n");
+
+	k_mutex_init(&val_mutex);
+	k_condvar_init(&red_cv);
+	k_condvar_init(&green_cv);
+	k_condvar_init(&yellow_cv);
+	k_sem_init(&release_sem, 0,1);
+
 	int ret = init_uart();
     
 	if (ret != 0) {
@@ -170,66 +152,67 @@ static void dispatcher_task(void *unused1, void *unused2, void *unused3)
 		// Receive dispatcher data from uart_task fifo
 		struct data_t *rec_item = k_fifo_get(&dispatcher_fifo, K_FOREVER);
 		char sequence[20];
-		memcpy(sequence,rec_item->msg,20);
+		memset(sequence,0,sizeof(sequence));
+		strncpy(sequence, rec_item->msg, sizeof(sequence)-1);
 		k_free(rec_item);
 
 		printk("Dispatcher: %s\n", sequence);
 
-
-        // You need to:
-        // Parse color and time from the fifo data
-        // Example
-		int Tlaskuri = 0;
-		
-		for (int i =0; sequence[i] != '\0';) {
-            char color = sequence[i];
-		
-
-        if (color == 'R' || color == 'r') {
-            printk("Color: RED\n");
-            gpio_pin_set_dt(&red,1);
-            k_msleep(1000);
-            gpio_pin_set_dt(&red,0);
-			i++;
-            
-        } else if (color == 'Y' || color == 'y') {
-            printk("Color: YELLOW\n");
-            gpio_pin_set_dt(&red,1);
-			gpio_pin_set_dt(&green,1);
-            k_msleep(1000);
-            gpio_pin_set_dt(&red,0);
-			gpio_pin_set_dt(&green,0);
+		int i = 0;
+		int Tlaskuri=0;
+		while (sequence[i] != '\0')
+		{
+			char color = sequence[i];
 			i++;
 
-        } else if (color == 'G' || color == 'g') {
-            printk("Color: GREEN\n");
-            gpio_pin_set_dt(&green,1);
-            k_msleep(1000);
-            gpio_pin_set_dt(&green,0);
-			i++;
+			if (color == 'T' || color == 't')
+			{
+				if (Tlaskuri == 0){
+					i = 0;
+					printk("UUdestaan");
+					Tlaskuri = 1;
+					continue;
+				}else{
+				continue;
+			}
+			}
+
+			int duration = 1000;
+			if (sequence[i]==',')
+			{
+				i++;
+				duration=atoi(&sequence[i]);
+				while (sequence[i] >= '0' && sequence[i] <= '9')
+				{
+					i++;
+				}
+			}
+
+			k_mutex_lock(&val_mutex, K_FOREVER);
+			active_color = color;
+			active_duration = duration;
+
+			if (color == 'R' || color == 'r')
+			{
+				k_condvar_signal(&red_cv);
+			}
+			else if(color == 'Y' || color == 'y')
+			{
+				k_condvar_signal(&yellow_cv);
+			}
+			else if(color == 'G' || color == 'g')
+			{
+				k_condvar_signal(&green_cv);
+			}
+			k_mutex_unlock(&val_mutex);
+			k_sem_take(&release_sem, K_FOREVER);
 		}
-		else if (color == 'T' || color == 't') {
-			if (Tlaskuri == 0){
-			i = 0;
-			printk("UUdestaan");
-			Tlaskuri++;
-		}else{
-			i++;
-		}
-		k_msleep(1000);
-			
-
-		} else {
-            printk("Unknown color: %c\n", color);
-        }
-        int time = atoi(sequence+2); 
-		printk("Data: %c %d\n", color, time);
-        // Send the parsed color information to tasks using fifo
-        // Use release signal to control sequence or k_yield
-	}
-	
+		
 	}
 }
 
-K_THREAD_DEFINE(dis_thread,STACKSIZE,dispatcher_task,NULL,NULL,NULL,PRIORITY,0,0);
-K_THREAD_DEFINE(uart_thread,STACKSIZE,uart_task,NULL,NULL,NULL,PRIORITY,0,0);
+K_THREAD_DEFINE(dis_thread, STACKSIZE, dispatcher_task, NULL, NULL, NULL, PRIORITY, 0, 0);
+K_THREAD_DEFINE(uart_thread, STACKSIZE, uart_task, NULL, NULL, NULL, PRIORITY, 0, 0);
+K_THREAD_DEFINE(red_thread, STACKSIZE, red_led_task, NULL, NULL, NULL, PRIORITY, 0, 0);
+K_THREAD_DEFINE(yellow_thread, STACKSIZE, yellow_led_task, NULL, NULL, NULL, PRIORITY, 0, 0);
+K_THREAD_DEFINE(green_thread, STACKSIZE, green_led_task, NULL, NULL, NULL, PRIORITY, 0, 0);

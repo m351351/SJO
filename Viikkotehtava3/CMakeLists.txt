@@ -6,4 +6,5 @@ project(valot)
 target_sources(app PRIVATE 
     src/main.c
     src/button.c
+    src/led_task.c
 )
