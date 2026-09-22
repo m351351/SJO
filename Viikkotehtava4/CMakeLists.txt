@@ -9,4 +9,5 @@ target_sources(app PRIVATE
     src/uart.c
     src/dispatcher.c
     src/debug.c
+    src/led_task.c
 )
