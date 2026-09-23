@@ -24,7 +24,7 @@
 volatile int tilakone = 0; 
 int led_state = 0;
 struct k_timer timer;
-
+struct k_timer timer2;
 
 int main(void)
 {

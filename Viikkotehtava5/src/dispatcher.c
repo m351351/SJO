@@ -25,7 +25,9 @@ extern const struct gpio_dt_spec green;
 #define EASTEREGG           -4 // palauttaa tämän jos antaa arvoksi mun syntymäkellonajan
 
 extern struct k_timer timer;
+extern struct k_timer timer2;
 extern void timer_handler(struct k_timer *timer_id);
+extern void timer_handler2(struct k_timer *timer_id);
 
 int time_parse(char *time) {
 
@@ -133,6 +135,9 @@ void dispatcher_task(void *unused1, void *unused2, void *unused3)
             printk("hyvä aika, ajetaan ajastin \n");
             k_timer_init(&timer, timer_handler, NULL);
             k_timer_start(&timer, K_SECONDS(ret), K_FOREVER);
+            printk("sammutetaan kans se ledi");
+            k_timer_init(&timer2, timer_handler2, NULL);
+            k_timer_start(&timer2, K_SECONDS(ret+1), K_FOREVER);
             continue;
         } 
         else if (ret == TIME_VALUE_ERROR){
@@ -271,13 +276,12 @@ void dispatcher_task(void *unused1, void *unused2, void *unused3)
 //tämä on vika vaihe vk5 tehtävässä. Voi laittaa hommaksi mitä vaan
 // control led using timer interrupt
 void timer_handler(struct k_timer *timer_id) {
-    extern int led_state;
     extern const struct gpio_dt_spec blue;
-	if (led_state == false) {
 		gpio_pin_set_dt(&blue,1);
-		led_state = true;
-	} else {
+}
+
+void timer_handler2(struct k_timer *timer_id) {
+    extern const struct gpio_dt_spec blue;
 		gpio_pin_set_dt(&blue,0);
-		led_state = false;
-	}
+
 }
