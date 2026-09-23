@@ -104,7 +104,26 @@ void dispatcher_task(void *unused1, void *unused2, void *unused3)
 		strncpy(sequence, rec_item->msg, sizeof(sequence)-1);
 		k_free(rec_item);
 
+        bool just_numbers = true;
+        if(strlen(sequence)==6)
+        {
+            for(int j = 0; j<6; j++)
+            {
+                if(!isdigit(sequence[j]))
+                {
+                    just_numbers = false;
+                    break;
+                }
+             }
+        } 
+        else
+        {
+            just_numbers = false;
+        }
+        
+       
 
+        if (just_numbers){
         int ret = time_parse(sequence);
         // check parser return value
         if (ret > COMMAND_OK) {
@@ -113,7 +132,7 @@ void dispatcher_task(void *unused1, void *unused2, void *unused3)
             // Timer initialization
             printk("hyvä aika, ajetaan ajastin \n");
             k_timer_init(&timer, timer_handler, NULL);
-            k_timer_start(&timer, K_SECONDS(ret), K_NO_WAIT);
+            k_timer_start(&timer, K_SECONDS(ret), K_FOREVER);
             continue;
         } 
         else if (ret == TIME_VALUE_ERROR){
@@ -130,9 +149,12 @@ void dispatcher_task(void *unused1, void *unused2, void *unused3)
         }
         else if (ret == EASTEREGG){
             printk("Annettu aika on Merin syntymäaika");
+            k_timer_init(&timer, timer_handler, NULL);
+            k_timer_start(&timer, K_SECONDS(ret), K_NO_WAIT);
+            continue;
             
         }
-
+    }
 
 
 
