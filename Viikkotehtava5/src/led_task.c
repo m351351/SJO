@@ -5,6 +5,7 @@
 
 const struct gpio_dt_spec red = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios);
 const struct gpio_dt_spec green = GPIO_DT_SPEC_GET(DT_ALIAS(led1), gpios);
+const struct gpio_dt_spec blue = GPIO_DT_SPEC_GET(DT_ALIAS(led2), gpios);
 
 
 struct k_mutex val_mutex;
@@ -29,8 +30,14 @@ int init_led() {
         return ret;
     }
 
+    ret = gpio_pin_configure_dt(&blue, GPIO_OUTPUT_ACTIVE);
+	if (ret < 0){ 
+        return ret;
+    }
+
 	gpio_pin_set_dt(&red, 0);
     gpio_pin_set_dt(&green, 0);
+    gpio_pin_set_dt(&blue, 0);
 	printk("Led initialized ok\n");
 	return 0;
 }

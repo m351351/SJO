@@ -14,6 +14,7 @@
 #include "dispatcher.h"
 #include "debug.h"
 #include "led_task.h"
+#include <ctype.h>
 
 // Thread initializations
 #define STACKSIZE 500
@@ -22,11 +23,7 @@
 
 volatile int tilakone = 0; 
 int led_state = 0;
-
-#define COMMAND_OK 0
-//definaa tänne ne samat virhekoodit mitä oli TimeParser.h:ssa
-int parser(char *command); // tämä muokkaa oikeannimiseksi sitten
-
+struct k_timer timer;
 
 
 int main(void)
@@ -67,67 +64,15 @@ int main(void)
 
     k_yield();
 
-    //tänne niitä ehtoja noista palautusarvoista. 
-    // jos ret on pienempi kuin nolla --> timevalueerror
-    // jos isompi ku nolla --> command ok
-    // jne.
-    char c=0;
-	int cnt = 0;
-	char buffer[16];
+     while (true) {
+        k_sleep(K_FOREVER);
+    }
 
-	// superloop
-	while (true) {
-
-		if (uart_poll_in(uart_dev,&c) == 0) {
-			if (c == '\n' || c == '\r') {
-				// printk(buffer);
-				// here you call parser
-				int ret = parser(buffer);
-				// check parser return value
-				if (ret == COMMAND_OK) {
-					// send signal / message to mailbox
-                    // tänne keskeytystimer teemun ohjeista debug: k_time_init
-                    // Timer initialization
-                    k_timer_init(&timer, timer_handler, NULL);
-                    k_timer_start(&timer, K_SECONDS(ret), NULL);
-				} 
-				// clear buffer and counter
-				cnt = 0;
-				memset(buffer,0,16);
-			} else {
-				// add received character to buffer
-				buffer[cnt] = c;
-				cnt++;
-			}
-		}
-	}
-
-    
     return 0;
 }
-
-// alla olevaan kopioidaan se koodia TimeParser.cpp. Eli tuo alla oleva pois
-// ja se toinne tilalle
-int parser(char *command) {
-	int ret = COMMAND_OK;
-
-	// add your own code from googletest here!!
-	// to check the buffer for correct sequence
 	
-	return ret;
-}
 
-//tämä on vika vaihe vk5 tehtävässä. Voi laittaa hommaksi mitä vaan
-// control led using timer interrupt
-void timer_handler(struct k_timer *timer_id) {
-	if (red_state == false) {
-		gpio_pin_set_dt(&red,1);
-		red_state = true;
-	} else {
-		gpio_pin_set_dt(&red,0);
-		red_state = false;
-	}
-}
+
 
 // Säikeiden määritykset
 K_THREAD_DEFINE(dis_thread, STACKSIZE, dispatcher_task, NULL, NULL, NULL, PRIORITY, 0, 0);

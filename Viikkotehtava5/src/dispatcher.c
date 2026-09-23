@@ -12,12 +12,90 @@
 #include "led_task.h"
 #include <assert.h>
 #include <sys/types.h>
+#include <ctype.h>
 
 extern const struct gpio_dt_spec red;
 extern const struct gpio_dt_spec green;
 
+#define COMMAND_OK 0
+//definaa tänne ne samat virhekoodit mitä oli TimeParser.h:ssa
+#define TIME_LEN_ERROR      -1 // palautetaan jos merkkejä on erimäärä kuin 6
+#define TIME_ARRAY_ERROR    -2 // jos palautusarvo on tyhjä (NULL) tai sisältää vääriä merkkejä
+#define TIME_VALUE_ERROR    -3 // palautetaan jos sekunteja tai minuutteja yli 59 tai tunteja yli 23
+#define EASTEREGG           -4 // palauttaa tämän jos antaa arvoksi mun syntymäkellonajan
+
+extern struct k_timer timer;
+extern void timer_handler(struct k_timer *timer_id);
+
+int time_parse(char *time) {
+
+	// how many seconds, default returns error
+	//int seconds = TIME_LEN_ERROR;
+
+	// TODO: Check that string is not null
+	if(time == NULL){
+		return TIME_ARRAY_ERROR;
+	}
+
+	if(strlen(time) != 6){
+		return TIME_LEN_ERROR;
+	}
+
+	for (int i = 0; i < 6; i++){
+		if(!isdigit(time[i])){
+			return TIME_ARRAY_ERROR;
+		}
+	}
+
+	// HHMMSS
+	// HH values [0]
+	// MM values [1]
+	// SS values [2] 
+		// Parse values from time string
+	// For example: 124033 -> 12hour 40min 33sec
+    int values[3];
+	values[2] = atoi(time+4); // seconds
+	time[4] = 0;
+	values[1] = atoi(time+2); // minutes
+	time[2] = 0;
+	values[0] = atoi(time); // hours
+	// Now you have:
+	// values[0] hour
+	// values[1] minute
+	// values[2] second
+
+	// TODO: Add boundary check time values: below zero or above limit not allowed
+	// limits are 59 for minutes, 23 for hours, etc
+
+
+	// TODO: Calculate return value from the parsed minutes and seconds
+	// Otherwise error will be returned!
+	// seconds = ...
+	if (values[0] < 0 || values[0] > 23 ||
+        values[1] < 0 || values[1] > 59 ||
+        values[2] < 0 || values[2] > 59) {
+        return TIME_VALUE_ERROR;
+    }
+
+	if (values[0] == 17 &&
+        values[1] == 44 &&
+        values[2] == 00) {
+        return EASTEREGG;
+    }
+
+	int seconds = (values[0] * 3600) + (values[1] * 60) + values[2];
+	
+	if (seconds == 0){
+		return TIME_VALUE_ERROR;
+	}
+
+	return seconds;
+}
+
+
 void dispatcher_task(void *unused1, void *unused2, void *unused3)
 {
+    
     while (true) {
         // Receive dispatcher data from uart_task fifo
         struct data_t *rec_item = k_fifo_get(&dispatcher_fifo, K_FOREVER);
@@ -25,6 +103,39 @@ void dispatcher_task(void *unused1, void *unused2, void *unused3)
         memset(sequence,0,sizeof(sequence));
 		strncpy(sequence, rec_item->msg, sizeof(sequence)-1);
 		k_free(rec_item);
+
+
+        int ret = time_parse(sequence);
+        // check parser return value
+        if (ret > COMMAND_OK) {
+            // send signal / message to mailbox
+            // tänne keskeytystimer teemun ohjeista debug: k_time_init
+            // Timer initialization
+            printk("hyvä aika, ajetaan ajastin \n");
+            k_timer_init(&timer, timer_handler, NULL);
+            k_timer_start(&timer, K_SECONDS(ret), K_NO_WAIT);
+            continue;
+        } 
+        else if (ret == TIME_VALUE_ERROR){
+            printk("Sekunteja tai minuutteja yli 59 tai tunteja yli 23");
+            continue;
+        }
+        else if (ret == TIME_ARRAY_ERROR){
+            printk("Palautusarvo on NULL, ei siällä mitään tai sisältää vääriä merkkejä");
+            continue;
+        }
+        else if (ret == TIME_LEN_ERROR){
+            printk("Merkkejä on erimäärä kuin 6");
+            continue;
+        }
+        else if (ret == EASTEREGG){
+            printk("Annettu aika on Merin syntymäaika");
+            
+        }
+
+
+
+
 
         // paina pelkkää enteriä niin tämä iskee päälle:
         __ASSERT(strlen(sequence) > 0, "Tyhjä merkkijono havaittu dispatcherissa!");
@@ -130,5 +241,21 @@ void dispatcher_task(void *unused1, void *unused2, void *unused3)
         timing_stop();
         uint64_t total_ns = timing_cycles_to_ns(timing_cycles_get(&seq_start, &seq_end));
         printk("Sekvenssin yhteenlaskettu kokonaisaika: %llu ns\n", total_ns);
+	}
+}
+
+
+
+//tämä on vika vaihe vk5 tehtävässä. Voi laittaa hommaksi mitä vaan
+// control led using timer interrupt
+void timer_handler(struct k_timer *timer_id) {
+    extern int led_state;
+    extern const struct gpio_dt_spec blue;
+	if (led_state == false) {
+		gpio_pin_set_dt(&blue,1);
+		led_state = true;
+	} else {
+		gpio_pin_set_dt(&blue,0);
+		led_state = false;
 	}
 }
