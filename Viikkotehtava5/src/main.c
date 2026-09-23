@@ -1,7 +1,17 @@
 // Meri-Tuulia Turtinen
 // TVT24SPL
 // Tavoitellaan kolmea pistettä
-//
+// Tehty ensimmäisen pisteen suoritus eli testit ajettu ja siirretty varsinaiseen ohjelmaan
+// Tehty toisen pisteen suoritus eli tehty lisää testikeissejä
+// Lisänä myös oma pääsiäismuna --> syötä ajaksi 174400
+// aloitettu kolmannen pisteen suoritus eli lisätty testausta liikennevaloihin
+// testeissä toistaiseksi toimii kirjainten tsekkaus ja saa olla pilkku sekä numeroita
+// mutta vielä ei toimi testi jossa hylättäis jos käyttäjä antaa kirjaimia ja numeroita, mutta
+// ei erota niitä pilkulla
+// kirjainten testausta ei ole vielä lisätty RTOS -ohjelmaan
+
+// lisätty kopiot myös TimeParser.cpp, TimeParser.h ja TimeParserTest.cpp
+// mutta varsinaiset testaukset olen tehnyt erillisellä ohjelmalla
 
 
 #include <zephyr/kernel.h>
@@ -71,8 +81,6 @@ int main(void)
     return 0;
 }
 	
-
-
 
 // Säikeiden määritykset
 K_THREAD_DEFINE(dis_thread, STACKSIZE, dispatcher_task, NULL, NULL, NULL, PRIORITY, 0, 0);
