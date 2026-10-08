@@ -8,6 +8,8 @@ ${baud} 	115200
 ${board}	nRF
 ${seq}      000120X
 ${error}    80X
+${seq1}     666666X
+${error1}   -3X
 
 *** Test Cases ***
 Connect Serial
@@ -18,7 +20,6 @@ Connect Serial
 	Reset Output Buffer
 
 Serial Led Control
-	# lähetetään RYG ja lopetusmerkki X
 	Write Data   ${seq}   encoding=ascii 
 	Log To Console   Send sequence ${seq}
 
@@ -36,7 +37,23 @@ Serial Led Control
 	# koska lopetusmerkki X pitää ensin poistaa merkkijonosta
 	# tai vaihtaa lopetusmerkki esim \0
 	# Should Be Equal As Integers   ${read}    -1
+
+Test1
+	#kokeillaan testata vaaranlainen numero
+	Write Data   ${seq1}   encoding=ascii 
+	Log To Console   Send sequence ${seq1}
+
+	# vastaanotetaan merkkijono kunnes lopetusmerkki X (58) 
+	${read} =   Read Until   terminator=58   encoding=ascii 
+
+	# konsolille näkyviin vastaanotettu merkkijono
+	Log To Console   Received ${read}
 	
+	# vertaillaan merkkijonoa
+	Should Be Equal As Strings   ${read}    ${error1}
+	Log To Console   Tested ${read} is same as ${error1}
+
+
 Disconnect Serial
 	Log To Console  Disconnecting ${board}
 	[TearDown]  Delete Port  ${com}
@@ -45,4 +62,3 @@ Disconnect Serial
 	
 	
 	
-

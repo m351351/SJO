@@ -134,28 +134,28 @@ void dispatcher_task(void *unused1, void *unused2, void *unused3)
             // send signal / message to mailbox
             // tänne keskeytystimer teemun ohjeista debug: k_time_init
             // Timer initialization
-            printk("hyvä aika, ajetaan ajastin \n");
+            //printk("hyvä aika, ajetaan ajastin \n");
             k_timer_init(&timer, timer_handler, NULL);
             k_timer_start(&timer, K_SECONDS(ret), K_FOREVER);
-            printk("sammutetaan kans se ledi");
+            //printk("sammutetaan kans se ledi");
             k_timer_init(&timer2, timer_handler2, NULL);
             k_timer_start(&timer2, K_SECONDS(ret+1), K_FOREVER);
             continue;
         } 
         else if (ret == TIME_VALUE_ERROR){
-            printk("Sekunteja tai minuutteja yli 59 tai tunteja yli 23");
+            //printk("Sekunteja tai minuutteja yli 59 tai tunteja yli 23");
             continue;
         }
         else if (ret == TIME_ARRAY_ERROR){
-            printk("Palautusarvo on NULL, ei siällä mitään tai sisältää vääriä merkkejä");
+            //printk("Palautusarvo on NULL, ei siällä mitään tai sisältää vääriä merkkejä");
             continue;
         }
         else if (ret == TIME_LEN_ERROR){
-            printk("Merkkejä on erimäärä kuin 6");
+            //printk("Merkkejä on erimäärä kuin 6");
             continue;
         }
         else if (ret == EASTEREGG){
-            printk("Annettu aika on Merin syntymäaika");
+            //printk("Annettu aika on Merin syntymäaika");
             k_timer_init(&timer, timer_handler, NULL);
             k_timer_start(&timer, K_SECONDS(ret), K_NO_WAIT);
             continue;
@@ -188,7 +188,7 @@ void dispatcher_task(void *unused1, void *unused2, void *unused3)
 				if (Tlaskuri == 0)
                 {
 					i = 0;
-					printk("UUdestaan");
+					//printk("UUdestaan");
 					Tlaskuri = 1;
 					continue;
 				}   
@@ -201,7 +201,7 @@ void dispatcher_task(void *unused1, void *unused2, void *unused3)
             else if (color == 'D' || color == 'd')
             {
                 debug_enabled = !debug_enabled;
-                printk("Debug-tulostukset: %s\n", debug_enabled ? "PAALLA" : "POIS");
+                //printk("Debug-tulostukset: %s\n", debug_enabled ? "PAALLA" : "POIS");
                 continue;
             }
                         
@@ -213,7 +213,7 @@ void dispatcher_task(void *unused1, void *unused2, void *unused3)
 				i++;
 				duration=atoi(&sequence[i]);
                 if (duration < 0) {
-                    printk("VIRHE 2: Syötetty kesto on negatiivinen (%d)!\n", duration);
+                    //printk("VIRHE 2: Syötetty kesto on negatiivinen (%d)!\n", duration);
                  }
                  // syötä negatiivinen arvo niin tämä laukeaa
                 __ASSERT(duration >= 0, "Kesto ei saa olla negatiivinen!");
@@ -244,7 +244,7 @@ void dispatcher_task(void *unused1, void *unused2, void *unused3)
 			}
             else
             {
-                printk("VIRHE 3: Tuntematon merkki (%c) vastaanotettu!\n", color);
+                //printk("VIRHE 3: Tuntematon merkki (%c) vastaanotettu!\n", color);
                 // syötä joku muu kuin r ,g, y, t tai d niin tämä laukeaa
                 __ASSERT(0, "Tuntematon merkki sekvenssissä!");
             }
@@ -269,7 +269,7 @@ void dispatcher_task(void *unused1, void *unused2, void *unused3)
 		timing_t seq_end = timing_counter_get();
         timing_stop();
         uint64_t total_ns = timing_cycles_to_ns(timing_cycles_get(&seq_start, &seq_end));
-        printk("Sekvenssin yhteenlaskettu kokonaisaika: %llu ns\n", total_ns);
+        //printk("Sekvenssin yhteenlaskettu kokonaisaika: %llu ns\n", total_ns);
 	}
 }
 

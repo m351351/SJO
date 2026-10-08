@@ -18,7 +18,7 @@ extern int time_parse(char *time);
 
 int init_uart(void) {
     if (!device_is_ready(uart_dev)) {
-        printk("UART device not ready\n");
+        //printk("UART device not ready\n");
         return 1;
     } 
     return 0;
@@ -27,53 +27,38 @@ int init_uart(void) {
  void uart_task(void *unused1, void *unused2, void *unused3)
 {
 	// Received character from UART
-	char rc=0;
+	char rc = 0;
 	// Message from UART
 	char uart_msg[20];
-	memset(uart_msg,0,20);
+	memset(uart_msg, 0, 20);
 	int uart_msg_cnt = 0;
 
 	while (true) {
 		// Ask UART if data available
-		if (uart_poll_in(uart_dev,&rc) == 0) {
-			//printk("Saatu merkki: %c\n", rc);
+		if (uart_poll_in(uart_dev, &rc) == 0) {
 			
-			// If character is not newline, add to UART message buffer
-			if (rc != 'X') { //vaihdettu robotin lopetusmerkiksi, ei kannata olla /r (enter) koska robotin ohjelma ei sitä osaa käsitellä
+			// If character is not X, add to UART message buffer
+			if (rc != 'X') {
 				uart_msg[uart_msg_cnt] = rc;
 				uart_msg_cnt++;
-			// Character is newline, copy dispatcher data and put to FIFO buffer
-			} else {
-				//printk(uart_msg); //palauttaa merkkijonon ilman X
-				int timer_delay = time_parse(uart_msg); // 000120 -> 80
-				printk("%dX", timer_delay); // näin saadaan välitettyä  robotille 
-				//printk("UART msg %s\n", uart_msg);
-                                
-                // FIFO Stuff begins
+				uart_msg[uart_msg_cnt] = '\0';
+			} 
+			// Character is X, process the time string and reply
+			else {
+				int timer_delay = time_parse(uart_msg); 
 				
-                struct data_t *buf = k_malloc(sizeof(struct data_t));
-				if (buf == NULL) {
-					return;
-				}
-				// Copy UART message to dispatcher data
-				// strncpy(buf->msg, 20, uart_msg); // mitä ihmettä, miksi kaatuu!!
-				snprintf(buf->msg, 20, "%s", uart_msg);
+				char response_str[20];
+				snprintf(response_str, sizeof(response_str), "%dX", timer_delay);
 
-				// You need to:
-				// Put dispatcher data to FIFO buffer
-                k_fifo_put(&dispatcher_fifo, buf);
-				// Clear UART receive buffer
+				for (int k = 0; response_str[k] != '\0'; k++) {
+					uart_poll_out(uart_dev, response_str[k]);   
+				} 
+				
+				// Clear UART receive buffer after processing
 				uart_msg_cnt = 0;
-				memset(uart_msg,0,20);
-
-				// Clear UART message buffer
-				uart_msg_cnt = 0;
-				memset(uart_msg,0,20);
+				memset(uart_msg, 0, 20);
 			}
 		}
 		k_msleep(10);
-                //return 0;
 	}
-	
 }
-
